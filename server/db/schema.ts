@@ -1,5 +1,17 @@
 import { sql } from 'drizzle-orm';
-import { boolean, integer, pgTable, text, timestamp, uuid, varchar, smallint, serial } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  varchar,
+  smallint,
+  serial,
+  pgEnum,
+  json,
+} from 'drizzle-orm/pg-core';
 
 const defaultUuidPkField = () =>
   uuid('id')
@@ -7,6 +19,17 @@ const defaultUuidPkField = () =>
     .$default(() => sql`gen_random_uuid()`);
 
 const defaultSerialPkField = () => serial('id').primaryKey();
+
+export const employmentTypeEnum = pgEnum('employment_type', [
+  'FULL_TIME',
+  'PART_TIME',
+  'CONTRACTOR',
+  'TEMPORARY',
+  'INTERN',
+  'VOLUNTEER',
+  'PER_DIEM',
+  'OTHER',
+]);
 
 //---------------**************----------------
 
@@ -48,6 +71,23 @@ export const jobPostingsTable = pgTable('job_postings', {
   }),
   isPublished: boolean('is_published').default(false).notNull(),
   totalApplicants: integer('total_applicants').default(0).notNull(),
+  employmentType: employmentTypeEnum('employment_type').array(),
+  jobLocations: json('job_locations').$type<
+    {
+      streetAddress?: string;
+      addressLocality?: string;
+      addressRegion?: string;
+      postalCode?: string;
+      addressCountry: string;
+    }[]
+  >(),
+  isRemote: boolean('is_remote').default(false).notNull(),
+  baseSalary: json('base_salary').$type<{
+    unitText: 'Hour' | 'Day' | 'Week' | 'Month' | 'Year';
+    currency: string;
+    minValue: number;
+    maxValue: number;
+  }>(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
